@@ -5,25 +5,25 @@ export function useSunCalc(lat, lon) {
   return useMemo(() => {
     if (lat == null || lon == null) return null
 
-    const now   = new Date()
+    const now = new Date()
     const times = SunCalc.getTimes(now, lat, lon)
     const illum = SunCalc.getMoonIllumination(now)
-    const pos   = SunCalc.getMoonPosition(now, lat, lon)
+    const pos = SunCalc.getMoonPosition(now, lat, lon)
 
     return {
-      sunrise:    times.sunrise,
-      sunset:     times.sunset,
-      solarNoon:  times.solarNoon,
+      sunrise: times.sunrise,
+      sunset: times.sunset,
+      solarNoon: times.solarNoon,
       goldenHourMorning: times.goldenHourEnd,
       goldenHourEvening: times.goldenHour,
 
-      // How far the sun has traveled through today's arc [0, 1]
+      // The sun's progress
       sunProgress: computeSunProgress(times.sunrise, times.sunset),
 
       moon: {
-        fraction:    illum.fraction,   // 0 = new moon, 1 = full moon
-        phase:       illum.phase,
-        phaseName:   getMoonPhaseName(illum.phase),
+        fraction: illum.fraction,
+        phase: illum.phase,
+        phaseName: getMoonPhaseName(illum.phase),
         aboveHorizon: pos.altitude > 0,
       },
     }
@@ -31,11 +31,11 @@ export function useSunCalc(lat, lon) {
 }
 
 function computeSunProgress(sunrise, sunset) {
-  const now   = Date.now()
+  const now = Date.now()
   const start = sunrise.getTime()
-  const end   = sunset.getTime()
+  const end = sunset.getTime()
   if (now <= start) return 0
-  if (now >= end)   return 1
+  if (now >= end) return 1
   return (now - start) / (end - start)
 }
 

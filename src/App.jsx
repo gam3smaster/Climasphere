@@ -14,11 +14,11 @@ export default function App() {
       <OnboardingModal />
       <AppShell>
         <Routes>
-          <Route path="/"         element={<Dashboard />} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/forecast" element={<Forecast />} />
-          <Route path="/maps"     element={<Maps />} />
-          <Route path="/radar"    element={<Radar />} />
-          <Route path="/air"      element={<AirQuality />} />
+          <Route path="/maps" element={<Maps />} />
+          <Route path="/radar" element={<Radar />} />
+          <Route path="/air" element={<AirQuality />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </AppShell>

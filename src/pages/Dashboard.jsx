@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useWeather } from '../hooks/useWeather'
 import { useSunCalc } from '../hooks/useSunCalc'
+import { useAiBriefing } from '../hooks/useAiBriefing'
 import { useUiStore } from '../store/uiStore'
 import { getTempPalette } from '../lib/weather'
 import { ClimateSphere } from '../components/sphere/ClimateSphere'
@@ -8,6 +9,9 @@ import { WeatherTimeline } from '../components/timeline/WeatherTimeline'
 import { StatsRow } from '../components/dashboard/StatsRow'
 import { TenDayForecast } from '../components/dashboard/TenDayForecast'
 import { AiBriefing } from '../components/dashboard/AiBriefing'
+import { AqiWidget } from '../components/dashboard/AqiWidget'
+import { SunMoonCard } from '../components/dashboard/SunMoonCard'
+import { PrecipChart } from '../components/dashboard/PrecipChart'
 import { SkeletonBlock } from '../components/ui/LoadingState'
 
 export default function Dashboard() {
@@ -23,8 +27,13 @@ export default function Dashboard() {
     return weather.hourly.filter(h => new Date(h.time) >= now).slice(0, 24)
   }, [weather.hourly, weather.current])
 
-  // Update the CSS accent color whenever temperature changes
   const palette = getTempPalette(weather.current?.temp ?? null)
+
+  const briefing = useAiBriefing(
+    { current: weather.current, hourly: weather.hourly, daily: weather.daily },
+    weather.location,
+    userName
+  )
 
   if (weather.isError) {
     return (
@@ -43,16 +52,15 @@ export default function Dashboard() {
 
   return (
     <div
-      className="min-h-full p-6"
+      className="min-h-full p-4 sm:p-6"
       style={{
-        // All the child components should use temperature-reactive accent color var(--accent-primary)
         '--accent-primary': palette.accent,
         '--accent-glow':    palette.glow,
         '--accent-dim':     palette.glow.replace('0.14', '0.32'),
       }}>
 
       {/* Location header */}
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-6 flex items-end justify-between flex-wrap gap-2">
         <div>
           <h1
             className="text-2xl font-light tracking-tight"
@@ -76,27 +84,30 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Main columns grids */}
-      <div
-        className="grid gap-6"
-        style={{ gridTemplateColumns: '1fr 340px' }}>
+      {/* Main columns */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_340px]">
 
         {/* Left column */}
         <div className="space-y-5">
-          {/* The sphere (Hero) */}
+          {/* Sphere */}
           <div className="flex justify-center py-2">
-            <ClimateSphere current={weather.current} size={340} />
+            <div className="w-full max-w-[220px] sm:max-w-[280px] lg:max-w-[340px] mx-auto">
+              <ClimateSphere current={weather.current} size={340} />
+            </div>
           </div>
 
-          {/* Weather timeline */}
-          <div
-            className="p-5 rounded-2xl"
+          {/* Briefing reads better right under the sphere on mobile —
+              the desktop copy lives at the top of the right column below */}
+          <AiBriefing status={briefing.status} text={briefing.text} className="lg:hidden" />
+
+          {/* Timeline */}
+          <div className="p-5 rounded-2xl"
             style={{
               background: 'var(--bg-surface)',
               border:     '1px solid var(--border-default)',
-            }}
-          >
-            <p className="text-xs font-data mb-4" style={{ color: 'var(--text-ghost)', letterSpacing: '1.5px'}}>
+            }}>
+            <p className="text-xs font-data mb-4"
+              style={{ color: 'var(--text-ghost)', letterSpacing: '1.5px' }}>
               TODAY'S TRAJECTORY
             </p>
             {upcomingHours.length > 0
@@ -105,12 +116,18 @@ export default function Dashboard() {
             }
           </div>
 
+          {/* Precipitation chart */}
+          {weather.isReady && upcomingHours.length > 0 && (
+            <PrecipChart hourly={upcomingHours} />
+          )}
+          {weather.isLoading && <SkeletonBlock className="h-40" />}
+
           {/* Atmospheric stats */}
           {weather.isReady && (
             <StatsRow current={weather.current} />
           )}
           {weather.isLoading && (
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <SkeletonBlock key={i} className="h-20" />
               ))}
@@ -120,20 +137,26 @@ export default function Dashboard() {
 
         {/* Right column */}
         <div className="space-y-4">
-          <AiBriefing
-            weather={{
-              current: weather.current,
-              hourly: weather.hourly,
-              daily: weather.daily
-            }}
-            location={weather.location}
-            userName={userName}
-          />
+          <AiBriefing status={briefing.status} text={briefing.text} className="hidden lg:block" />
+
+          {weather.isReady && (
+            <SunMoonCard
+              sunCalc={sunCalc}
+              isDay={weather.current?.isDay ?? true}
+            />
+          )}
+
+          {weather.isReady && (
+            <AqiWidget airQuality={weather.airQuality} />
+          )}
 
           {weather.isReady && <TenDayForecast daily={weather.daily} />}
+
           {weather.isLoading && (
             <>
               <SkeletonBlock className="h-28" />
+              <SkeletonBlock className="h-44" />
+              <SkeletonBlock className="h-36" />
               <SkeletonBlock className="h-80" />
             </>
           )}

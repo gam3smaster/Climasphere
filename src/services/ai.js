@@ -4,19 +4,17 @@ const GEMINI_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
-// Build a compact weather context string for AI prompts.
-// We intentionally keep this short — the AI reasons better with
-// a clean summary than with a wall of raw JSON.
+// Context string for AI prompt
 export function buildWeatherContext(weather, location) {
   const { current, hourly, daily } = weather
 
-  // Next 12 hours is enough for "today" questions
+  // Context for the next 12 hours
   const now = new Date(current.time)
   const next12h = hourly
     .filter(h => new Date(h.time) >= now)
     .slice(0, 12)
 
-  // 5 days covers weekend/trip planning
+  // COntext for the next 5 days
   const next5d = daily.slice(0, 5)
 
   return `
@@ -41,15 +39,14 @@ ${next5d.map(d =>
 `.trim()
 }
 
-// Daily briefing — called once on dashboard load
+// Daily briefing
 export async function generateBriefing(weatherContext, userName) {
-  const prompt = `You are ClimaSphere, a calm and precise climate intelligence system.
-
-Write a daily briefing for ${userName ?? 'the user'} in 2–3 sentences (50 words max).
-
-Tone: quiet, intelligent, unhurried — like a trusted advisor, not a weather presenter.
-Focus: the most consequential weather event of the day and what the user should do about it.
-Never: start with a greeting, use weather emojis, or repeat raw numbers when a word works better.
+  const prompt = 
+  `You are ClimaSphere, a calm and precise climate intelligence system.
+  Write a daily briefing for ${userName ?? 'the user'} in 2–3 sentences, tailored to the location of the weather (50 words max).
+  The tone shoud be simple, quiet, calm, a little fun, and intelligent, like a trusted advisor, not a weather presenter.
+  Focus on the key weather event of the day and what the user should do about it.
+  Never start with a greeting, use weather emojis, or repeat raw numbers when a word works better.
 
 WEATHER DATA:
 ${weatherContext}`
@@ -57,12 +54,11 @@ ${weatherContext}`
   return callAI(prompt)
 }
 
-// Copilot — called per message in the chat widget (Phase 5)
+// AI Copilot
 export async function askCopilot(question, weatherContext, history = []) {
-  const system = `You are ClimaSphere's weather copilot — a calm, precise intelligence that helps people make decisions based on weather conditions.
-
-Answer in 1–3 sentences unless a list genuinely helps. Translate data into decisions, not numbers.
-When uncertain, say so. Never use weather emojis. Never fabricate conditions.
+  const system = `You are ClimaSphere's weather copilot, a calm, precise intelligence that helps people make decisions based on weather conditions.
+  Answer in 1–3 sentences unless a list genuinely helps. Translate data into decisions, not numbers.
+  When uncertain, say so. Never use weather emojis. Never fabricate weather conditions.
 
 CURRENT WEATHER DATA:
 ${weatherContext}`
@@ -70,11 +66,11 @@ ${weatherContext}`
   return callAI(question, system, history)
 }
 
-// ── Internals ─────────────────────────────────────────────────────
+// Internals
 
 async function callAI(prompt, systemPrompt = null, history = []) {
-  const geminiKey = import.meta.env.VITE_GEMINI_API_KEY
-  const groqKey   = import.meta.env.VITE_GROQ_API_KEY
+  const geminiKey = import.meta.env.GEMINI_API_KEY
+  const groqKey = import.meta.env.GROQ_API_KEY
 
   if (geminiKey) {
     try {
@@ -88,14 +84,14 @@ async function callAI(prompt, systemPrompt = null, history = []) {
     return await callGroq(prompt, systemPrompt, history, groqKey)
   }
 
-  // Neither key is set — return null so the UI can handle it gracefully
+  // If neither key is provided, return null
   return null
 }
 
 async function callGemini(prompt, systemPrompt, history, apiKey) {
   const contents = [
     ...history.map(msg => ({
-      role:  msg.role === 'assistant' ? 'model' : 'user',
+      role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: msg.content }],
     })),
     { role: 'user', parts: [{ text: prompt }] },
@@ -107,15 +103,15 @@ async function callGemini(prompt, systemPrompt, history, apiKey) {
       systemInstruction: { parts: [{ text: systemPrompt }] },
     }),
     generationConfig: {
-      temperature:     0.7,
+      temperature: 0.7,
       maxOutputTokens: 300,
     },
   }
 
   const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
+    body: JSON.stringify(body),
   })
 
   if (!res.ok) {
@@ -135,13 +131,13 @@ async function callGroq(prompt, systemPrompt, history, apiKey) {
   ]
 
   const res = await fetch(GROQ_URL, {
-    method:  'POST',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization:  `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model:       'llama-3.1-8b-instant',
+      model: 'llama-3.1-8b-instant',
       messages,
       temperature: 0.7,
       max_tokens:  300,

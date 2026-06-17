@@ -57,9 +57,11 @@ function NameStep({ name, avatar, onNameChange, onAvatarChange, onContinue }) {
   return (
     <div>
       <div className="mb-8">
-        <p className="text-xs font-data mb-2" style={{ color: 'var(--text-ghost)', letterSpacing: '2.5px' }}>
-          CLIMASPHERE
-        </p>
+        <img src="/climasphere-logo.png"
+          alt="ClimaSphere"
+          className="w-16 h-16 object-contain mb-4"
+          style={{ background: '#000', borderRadius: 12 }}
+        />
         <h1 className="text-2xl font-light mb-2" style={{ color: 'var(--text-primary)' }}>
           What should we call you?
         </h1>

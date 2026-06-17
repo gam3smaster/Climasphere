@@ -1,12 +1,6 @@
 node_modules/
 dist/
+.vscode/
 
-# Never commit API keys
 .env
 .env.local
-.env.production
-
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/

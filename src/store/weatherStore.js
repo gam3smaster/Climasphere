@@ -2,16 +2,12 @@ import { create } from 'zustand'
 import { fetchWeather } from '../services/openMeteo'
 
 export const useWeatherStore = create((set, get) => ({
-  current:    null,
-  hourly:     [],
-  daily:      [],
+  current: null,
+  hourly: [],
+  daily: [],
   airQuality: null,
-
-  status: 'idle', // 'idle' | 'loading' | 'success' | 'error'
-  error:  null,
-
-  // Track what we last fetched so navigation between pages
-  // doesn't trigger redundant API calls for the same location
+  status: 'idle',
+  error: null,
   lastFetchKey: null,
 
   async loadWeather(lat, lon) {
@@ -23,11 +19,11 @@ export const useWeatherStore = create((set, get) => ({
     try {
       const data = await fetchWeather(lat, lon)
       set({
-        current:      data.current,
-        hourly:       data.hourly,
-        daily:        data.daily,
-        airQuality:   data.airQuality,
-        status:       'success',
+        current: data.current,
+        hourly: data.hourly,
+        daily: data.daily,
+        airQuality: data.airQuality,
+        status: 'success',
         lastFetchKey: key,
       })
     } catch (err) {
@@ -36,7 +32,7 @@ export const useWeatherStore = create((set, get) => ({
     }
   },
 
-  // Force a fresh fetch — used by a "refresh" button if we add one
+  // Force refresh
   async refresh(lat, lon) {
     set({ lastFetchKey: null })
     return get().loadWeather(lat, lon)

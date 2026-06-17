@@ -23,17 +23,16 @@ export function ClimateSphere({ current, size = 360 }) {
 
   const cx = size / 2
   const cy = size / 2
-  const r  = size * 0.375
+  const r = size * 0.375
 
   return (
-    <div
-      className="relative flex items-center justify-center select-none"
-      style={{ width: size, height: size }}
+    <div className="relative flex items-center justify-center select-none w-full mx-auto"
+      style={{ maxWidth: size, aspectRatio: '1 / 1' }}
     >
       <svg
         viewBox={`0 0 ${size} ${size}`}
-        width={size}
-        height={size}
+        width="100%"
+        height="100%"
         style={{ overflow: 'visible' }}
         role="img"
         aria-label={`${Math.round(temp)}°C, ${meta.label}`}
@@ -417,13 +416,12 @@ function WindArc({ cx, cy, r, dir, speed, palette, size }) {
 // Skeleton
 
 function SphereSkeleton({ size }) {
-  const r = size * 0.375
   return (
     <div
-      className="rounded-full animate-pulse"
+      className="rounded-full animate-pulse w-full mx-auto"
       style={{
-        width:      r * 2,
-        height:     r * 2,
+        maxWidth:   size * 0.75,
+        aspectRatio: '1 / 1',
         background: 'var(--bg-elevated)',
       }}
     />

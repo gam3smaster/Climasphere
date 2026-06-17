@@ -50,7 +50,7 @@ export function StatsRow({ current }) {
   if (!current) return null
 
   return (
-    <div className="grid grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {STATS.map(stat => (
         <StatCard key={stat.key} stat={stat} current={current} />
       ))}

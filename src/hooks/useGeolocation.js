@@ -2,9 +2,9 @@ import { useState, useCallback } from 'react'
 
 export function useGeolocation() {
   const [state, setState] = useState({
-    status: 'idle', // 'idle' | 'requesting' | 'granted' | 'denied' | 'unavailable'
-    coords: null,   // { lat, lon } on success
-    error:  null,
+    status: 'idle',
+    coords: null,
+    error: null,
   })
 
   const request = useCallback(() => {
@@ -12,7 +12,7 @@ export function useGeolocation() {
       setState({
         status: 'unavailable',
         coords: null,
-        error:  'Geolocation is not supported by your browser.',
+        error: 'Geolocation is not supported by your browser.',
       })
       return
     }

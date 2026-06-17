@@ -13,14 +13,15 @@ const HOUR_MARKS = [
 
 export function WeatherTimeline({ hourly, sunCalc }) {
   const nowPct = dayProgress() * 100
-  const todayHrs  = useMemo(() => getTodayHours(hourly), [hourly])
-  const events = useMemo(() => buildEvents(todayHrs, sunCalc), [todayHrs, sunCalc])
+  const todayHrs = useMemo(() => getTodayHours(hourly), [hourly])
+  const events = useMemo(() => layoutEvents(buildEvents(todayHrs, sunCalc)), [todayHrs, sunCalc])
   const tempCurve = useMemo(() => buildTempCurve(todayHrs), [todayHrs])
 
   if (!todayHrs.length) return null
 
   return (
-    <div className="select-none">
+    <div className="select-none overflow-x-auto -mx-1 px-1">
+      <div style={{ minWidth: 560 }}>
 
       {/* Hour markers */}
       <div className="relative flex justify-between mb-3 px-0.5">
@@ -49,10 +50,11 @@ export function WeatherTimeline({ hourly, sunCalc }) {
         <NowCursor pct={nowPct} />
       </div>
 
-      <div className="relative" style={{ height: 44 }}>
+      <div className="relative" style={{ height: labelsHeight(events) }}>
         {events.map(ev => (
           <EventLabel key={ev.type} event={ev} />
         ))}
+      </div>
       </div>
     </div>
   )
@@ -102,7 +104,7 @@ function NowCursor({ pct }) {
 }
 
 function EventNode({ event }) {
-  const pct = dateToDayProgress(event.time) * 100
+  const pct = event.pct
   return (
     <div
       className="absolute"
@@ -117,7 +119,7 @@ function EventNode({ event }) {
 }
 
 function EventLabel({ event }) {
-  const pct = dateToDayProgress(event.time) * 100
+  const pct = event.pct
   const isPast = event.time < new Date()
   const color = EVENT_COLORS[event.type] ?? 'var(--text-muted)'
 
@@ -126,7 +128,7 @@ function EventLabel({ event }) {
       className="absolute flex flex-col items-center gap-0.5"
       style={{
         left: `${pct}%`,
-        top: 0,
+        top: event.row * 30,
         transform: 'translateX(-50%)',
         opacity: isPast ? 0.38 : 1,
         animation: 'event-rise 0.4s ease-out both',
@@ -206,7 +208,7 @@ function buildEvents(todayHrs, sunCalc) {
     events.push({ type: 'sunset', time: sunCalc.sunset, label: 'Sunset' })
   }
 
-  // First hour when rain probability crosses 40%
+  // First hour when rain probability is more than 40%
   const rainHour = todayHrs.find(h => (h.precipProb ?? 0) >= 40)
   if (rainHour) {
     events.push({
@@ -230,6 +232,27 @@ function buildEvents(todayHrs, sunCalc) {
   }
 
   return events.sort((a, b) => a.time - b.time)
+}
+
+const MIN_GAP_PCT = 12
+
+function layoutEvents(events) {
+  const lastPctByRow = {}
+
+  return events.map(ev => {
+    const pct = dateToDayProgress(ev.time) * 100
+    let row = 0
+    while (lastPctByRow[row] != null && Math.abs(pct - lastPctByRow[row]) < MIN_GAP_PCT) {
+      row += 1
+    }
+    lastPctByRow[row] = pct
+    return { ...ev, pct, row }
+  })
+}
+
+function labelsHeight(events) {
+  const maxRow = events.reduce((max, ev) => Math.max(max, ev.row), 0)
+  return 44 + maxRow * 30
 }
 
 function buildTempCurve(todayHrs) {

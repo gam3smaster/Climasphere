@@ -4,10 +4,9 @@ import { persist } from 'zustand/middleware'
 export const useLocationStore = create(
   persist(
     (set) => ({
-      // The location we're currently showing weather for
-      active: null, // { name, subtitle, lat, lon, country, countryCode }
+      // The location currently showing weather
+      active: null,
 
-      // Last 5 searched locations — shown as quick picks in the search UI
       recent: [],
 
       setActive(location) {
@@ -15,7 +14,6 @@ export const useLocationStore = create(
           active: location,
           recent: [
             location,
-            // Remove any previous entry for the same coordinates
             ...state.recent.filter(
               l => !(Math.abs(l.lat - location.lat) < 0.01 && Math.abs(l.lon - location.lon) < 0.01)
             ),
@@ -28,8 +26,8 @@ export const useLocationStore = create(
       },
     }),
     {
-      name:        'climasphere-location',
-      partialize:  state => ({ active: state.active, recent: state.recent }),
+      name: 'climasphere-location',
+      partialize: state => ({ active: state.active, recent: state.recent }),
     }
   )
 )

@@ -14,8 +14,6 @@ export const useUiStore = create(
       userName:   null,
       userAvatar: null, // one of the symbols defined in OnboardingModal
 
-      sidebarExpanded: false,
-
       setUserProfile(name, avatar) {
         set({
           userName:   name,
@@ -28,8 +26,12 @@ export const useUiStore = create(
         set({ onboarding: { complete: true, step: 'location' } })
       },
 
-      toggleSidebar() {
-        set(state => ({ sidebarExpanded: !state.sidebarExpanded }))
+      resetOnboarding() {
+        set({
+          onboarding: { complete: false, step: 'name' },
+          userName:   null,
+          userAvatar: null,
+        })
       },
     }),
     {

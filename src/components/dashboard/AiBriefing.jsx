@@ -7,9 +7,9 @@ export function AiBriefing({ status, text, className }) {
   return (
     <GlassCard className={cn('p-5', className)}>
       <div className="flex items-center gap-2 mb-3">
-        <Sparkles size={13} style={{ color: 'var(--accent-primary)' }} />
+        <Sparkles size={20} style={{ color: 'var(--accent-primary)' }} />
         <span className="text-xs font-data" style={{ color: 'var(--text-ghost)', letterSpacing: '1.5px' }}>
-          DAILY BRIEFING
+          DAILY AI BRIEFING
         </span>
       </div>
 

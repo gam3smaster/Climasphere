@@ -4,7 +4,7 @@ const GEMINI_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
-// Context string for AI prompt
+// Context for AI prompt
 export function buildWeatherContext(weather, location) {
   const { current, hourly, daily } = weather
 
@@ -44,9 +44,9 @@ export async function generateBriefing(weatherContext, userName) {
   const prompt = 
   `You are ClimaSphere, a calm and precise climate intelligence system.
   Write a daily briefing for ${userName ?? 'the user'} in 2–3 sentences, tailored to the location of the weather (50 words max).
-  The tone shoud be simple, quiet, calm, a little fun, and intelligent, like a trusted advisor, not a weather presenter.
+  The tone shoud be plain and simple, quiet, calm, a little fun, and intelligent, like a trusted advisor, not a weather presenter.
   Focus on the key weather event of the day and what the user should do about it.
-  Never start with a greeting, use weather emojis, or repeat raw numbers when a word works better.
+  Never start with a greeting, use weather emojis, or repeat numbers when a word works better.
 
 WEATHER DATA:
 ${weatherContext}`

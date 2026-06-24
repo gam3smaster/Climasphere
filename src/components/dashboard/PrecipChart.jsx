@@ -24,7 +24,7 @@ export function PrecipChart({ hourly }) {
     <GlassCard className="p-5">
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-data" style={{ color: 'var(--text-ghost)', letterSpacing: '1.5px' }}>
-          PRECIPITATION · NEXT 24H
+          PRECIPITATION (NEXT 24H)
         </p>
         <p className="text-xs font-data" style={{ color: 'var(--text-muted)' }}>
           % chance

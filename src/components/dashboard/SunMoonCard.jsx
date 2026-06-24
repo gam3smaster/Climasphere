@@ -133,8 +133,8 @@ function MoonDisc({ fraction, phase, size = 30 }) {
 
   const innerRx = r * Math.abs(1 - 2 * fraction)
 
-  const litSide  = isWaxing ? 'right' : 'left'
-  const darkSide = isWaxing ? 'left'  : 'right'
+  const litSide = isWaxing ? 'right' : 'left'
+  const darkSide = isWaxing ? 'left' : 'right'
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">

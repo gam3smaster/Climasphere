@@ -6,7 +6,7 @@ export default {
       fontFamily: {
         // Used for headings and display text
         display: ['Inter', 'system-ui', 'sans-serif'],
-        // Used for numbers, data readouts, code
+        // Used for numbers, data, and code
         data: ['JetBrains Mono', 'monospace'],
       },
     },

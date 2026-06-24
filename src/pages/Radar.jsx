@@ -9,7 +9,7 @@ import { LocationMarker } from '../components/maps/LocationMarker'
 const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 const DARK_ATTRIBUTION = '&copy; OpenStreetMap contributors &copy; CARTO'
 
-// How long each frame takes
+// The time each frame takes
 const FRAME_INTERVAL_MS = 600
 
 export default function Radar() {
@@ -53,7 +53,7 @@ export default function Radar() {
     )
   }
 
-  const frame    = radar?.frames?.[frameIndex]
+  const frame = radar?.frames?.[frameIndex]
   const isFuture = radar && frameIndex > radar.presentIndex
 
   return (
@@ -67,8 +67,7 @@ export default function Radar() {
         </p>
       </div>
 
-      <div
-        className="flex-1 rounded-2xl overflow-hidden relative"
+      <div className="flex-1 rounded-2xl overflow-hidden relative"
         style={{ border: '1px solid var(--border-default)', minHeight: 420 }}
       >
         <MapContainer

@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { buildWeatherContext, generateBriefing } from '../services/ai'
 
-// The briefing card renders twice in the dashboard layout — once for
-// mobile reading order, once for desktop — so the fetch lives here,
-// in a hook called once, rather than inside the card component itself.
+// The briefing card renders twice in the dashboard, mobile reading and desktop
 export function useAiBriefing(weather, location, userName) {
   const [status, setStatus] = useState('idle')
   const [text, setText]     = useState(null)
 
-  // Tracks what conditions the current briefing was generated for,
+  // This tracks what conditions the current briefing was generated for,
   // so it regenerates on real change, not on every re-render
   const generatedKey = useRef(null)
 

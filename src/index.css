@@ -107,6 +107,26 @@ body {
 
 /* Climate Sphere animations */
 
+@keyframes sphere-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+@keyframes shimmer-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes atmosphere-breathe {
   0%, 100% {
     opacity: 0.18;
@@ -202,7 +222,8 @@ body {
   93%{
     opacity: 0.6;
   }
-  94% { opacity: 0;
+  94% {
+    opacity: 0;
   }
 }
 
@@ -212,7 +233,8 @@ body {
   0%, 100% {
     box-shadow: 0 0 0 0 var(--accent-glow);
   }
-  50%{ box-shadow: 0 0 0 8px transparent;
+  50%{
+    box-shadow: 0 0 0 8px transparent;
   }
 }
 

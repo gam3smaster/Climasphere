@@ -2,6 +2,22 @@ import { useMemo } from 'react'
 import { getTempPalette, getWeatherMeta, windDirLabel } from '../../lib/weather'
 import { mapRange } from '../../lib/utils'
 
+// Condition-reactive color palettes for the sphere (Claude saved me)
+function getConditionPalette(category, isDay) {
+  const palettes = {
+    clear:   isDay
+      ? { core: '#FF8C00', mid: '#C85A00', edge: '#6B2800', glow: 'rgba(255,140,0,0.55)', shimmer: 'rgba(255,200,80,0.18)' }
+      : { core: '#1A2B5E', mid: '#0D1933', edge: '#050D1A', glow: 'rgba(80,120,255,0.35)', shimmer: 'rgba(120,160,255,0.10)' },
+    cloudy: { core: '#4A5568', mid: '#2D3748', edge: '#1A202C', glow: 'rgba(120,140,170,0.35)', shimmer: 'rgba(180,200,220,0.10)' },
+    drizzle: { core: '#2B6CB0', mid: '#1A4A7A', edge: '#0D2440', glow: 'rgba(66,153,225,0.45)', shimmer: 'rgba(100,180,255,0.12)' },
+    rain: { core: '#1E4E8C', mid: '#0F3060', edge: '#070F1E', glow: 'rgba(50,130,220,0.50)', shimmer: 'rgba(80,160,255,0.14)' },
+    snow: { core: '#B8D4F0', mid: '#7BA8D4', edge: '#3D6899', glow: 'rgba(180,210,255,0.40)', shimmer: 'rgba(220,235,255,0.20)' },
+    thunder: { core: '#44337A', mid: '#2D2060', edge: '#160D33', glow: 'rgba(128,90,213,0.55)', shimmer: 'rgba(180,130,255,0.15)' },
+    fog: { core: '#4A5568', mid: '#2D3748', edge: '#1A202C', glow: 'rgba(160,175,190,0.30)', shimmer: 'rgba(200,210,220,0.10)' },
+  }
+  return palettes[category] ?? palettes.cloudy
+}
+
 export function ClimateSphere({ current, size = 360 }) {
   if (!current) return <SphereSkeleton size={size} />
 
@@ -9,6 +25,7 @@ export function ClimateSphere({ current, size = 360 }) {
 
   const palette = getTempPalette(temp)
   const meta = getWeatherMeta(code)
+  const cPalette = getConditionPalette(meta.category, isDay)
 
   const visual = useMemo(() => ({
     cloudOpacity: mapRange(clouds, 0, 100, 0, 0.62),
@@ -17,8 +34,8 @@ export function ClimateSphere({ current, size = 360 }) {
     precipCount: Math.round(meta.intensity * 24) + 4,
     hasFog: meta.category === 'fog',
     hasLightning: meta.category === 'thunder',
-    atmosphereOpacity: mapRange(windSpeed, 0, 60, 0.14, 0.35),
-    coreOpacity: isDay ? 0.55 : 0.28,
+    atmosphereOpacity: mapRange(windSpeed, 0, 60, 0.18, 0.40),
+    coreOpacity: isDay ? 0.62 : 0.35,
   }), [clouds, meta, isDay, windSpeed])
 
   const cx = size / 2
@@ -26,9 +43,27 @@ export function ClimateSphere({ current, size = 360 }) {
   const r = size * 0.375
 
   return (
-    <div className="relative flex items-center justify-center select-none w-full mx-auto"
+    <div
+      className="relative flex items-center justify-center select-none w-full mx-auto"
       style={{ maxWidth: size, aspectRatio: '1 / 1' }}
     >
+      {/* Outer glow halo */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '82%',
+          height: '82%',
+          borderRadius: '50%',
+          background: 'transparent',
+          boxShadow: `0 0 32px 10px ${cPalette.glow}`,
+          animation: 'sphere-pulse 4s ease-in-out infinite',
+          pointerEvents: 'none',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+
       <svg
         viewBox={`0 0 ${size} ${size}`}
         width="100%"
@@ -37,13 +72,19 @@ export function ClimateSphere({ current, size = 360 }) {
         role="img"
         aria-label={`${Math.round(temp)}°C, ${meta.label}`}
       >
-        <SvgDefs cx={cx} cy={cy} r={r} palette={palette} isDay={isDay} coreOpacity={visual.coreOpacity} />
+        <SvgDefs
+          cx={cx} cy={cy} r={r}
+          palette={palette}
+          cPalette={cPalette}
+          isDay={isDay}
+          coreOpacity={visual.coreOpacity}
+        />
 
-        {/* Outer bloom */}
+        {/* Outer bloom ring */}
         <circle
           cx={cx} cy={cy} r={r + size * 0.115}
           fill="none"
-          stroke={palette.accent}
+          stroke={cPalette.core}
           strokeWidth="1"
           opacity={visual.atmosphereOpacity * 0.55}
           filter="url(#cs-bloom)"
@@ -54,7 +95,7 @@ export function ClimateSphere({ current, size = 360 }) {
         <circle
           cx={cx} cy={cy} r={r + size * 0.055}
           fill="none"
-          stroke={palette.accent}
+          stroke={cPalette.core}
           strokeWidth="1"
           opacity={visual.atmosphereOpacity}
         />
@@ -62,7 +103,22 @@ export function ClimateSphere({ current, size = 360 }) {
         {/* Sphere base */}
         <circle cx={cx} cy={cy} r={r} fill="url(#cs-base)" />
 
-        {/* Day/night sheen direction */}
+        {/* Rotating shimmer layer */}
+        <g clipPath="url(#cs-clip)">
+          <ellipse
+            cx={cx - r * 0.1}
+            cy={cy - r * 0.1}
+            rx={r * 0.85}
+            ry={r * 0.5}
+            fill="url(#cs-shimmer)"
+            style={{
+              transformOrigin: `${cx}px ${cy}px`,
+              animation: 'shimmer-rotate 18s linear infinite',
+            }}
+          />
+        </g>
+
+        {/* Day/night sheen */}
         <circle
           cx={cx} cy={cy} r={r}
           fill={isDay ? 'url(#cs-daysheen)' : 'url(#cs-nightsheen)'}
@@ -71,20 +127,16 @@ export function ClimateSphere({ current, size = 360 }) {
 
         {/* Cloud rings */}
         <g clipPath="url(#cs-clip)">
-          <g
-            style={{
-              transformOrigin: `${cx}px ${cy}px`,
-              animation: `cloud-drift ${visual.cloudOpacity < 0.2 ? '90s' : '55s'} linear infinite`,
-            }}
-          >
+          <g style={{
+            transformOrigin: `${cx}px ${cy}px`,
+            animation: `cloud-drift ${visual.cloudOpacity < 0.2 ? '90s' : '55s'} linear infinite`,
+          }}>
             <CloudWisps cx={cx} cy={cy} r={r} opacity={visual.cloudOpacity} seed={1} />
           </g>
-          <g
-            style={{
-              transformOrigin: `${cx}px ${cy}px`,
-              animation: `cloud-drift-reverse ${visual.cloudOpacity < 0.2 ? '120s' : '75s'} linear infinite`,
-            }}
-          >
+          <g style={{
+            transformOrigin: `${cx}px ${cy}px`,
+            animation: `cloud-drift-reverse ${visual.cloudOpacity < 0.2 ? '120s' : '75s'} linear infinite`,
+          }}>
             <CloudWisps cx={cx} cy={cy} r={r} opacity={visual.cloudOpacity * 0.5} seed={3} />
           </g>
         </g>
@@ -99,11 +151,7 @@ export function ClimateSphere({ current, size = 360 }) {
         {/* Precipitation */}
         {visual.hasPrecip && (
           <g clipPath="url(#cs-clip)">
-            <PrecipLayer
-              cx={cx} cy={cy} r={r}
-              type={visual.precipType}
-              count={visual.precipCount}
-            />
+            <PrecipLayer cx={cx} cy={cy} r={r} type={visual.precipType} count={visual.precipCount} />
           </g>
         )}
 
@@ -118,7 +166,7 @@ export function ClimateSphere({ current, size = 360 }) {
         <circle
           cx={cx} cy={cy} r={r}
           fill="none"
-          stroke="rgba(255,255,255,0.1)"
+          stroke="rgba(255,255,255,0.12)"
           strokeWidth="1.5"
         />
 
@@ -128,30 +176,28 @@ export function ClimateSphere({ current, size = 360 }) {
           cy={cy - r * 0.32}
           rx={r * 0.22}
           ry={r * 0.12}
-          fill="rgba(255,255,255,0.07)"
+          fill="rgba(255,255,255,0.09)"
           transform={`rotate(-25, ${cx}, ${cy})`}
         />
-
-        {/* Text readouts */}
 
         {/* Temperature */}
         <text
           x={cx} y={cy - 4}
           textAnchor="middle" dominantBaseline="middle"
-          fill="rgba(255,255,255,0.9)"
+          fill="rgba(255,255,255,0.92)"
           fontSize={size * 0.175}
           fontWeight="200"
-          fontFamily="Inter, system-ui, sans-serif"
+          fontFamily="'Space Grotesk', Inter, system-ui, sans-serif"
           letterSpacing="-2"
         >
           {Math.round(temp)}°
         </text>
 
-        {/* "Feels like" text */}
+        {/* Feels like */}
         <text
           x={cx} y={cy + size * 0.09}
           textAnchor="middle"
-          fill="rgba(255,255,255,0.35)"
+          fill="rgba(255,255,255,0.38)"
           fontSize={size * 0.038}
           fontFamily="'JetBrains Mono', monospace"
           letterSpacing="1"
@@ -163,28 +209,24 @@ export function ClimateSphere({ current, size = 360 }) {
         <text
           x={cx} y={cy + size * 0.155}
           textAnchor="middle"
-          fill="rgba(255,255,255,0.25)"
+          fill="rgba(255,255,255,0.28)"
           fontSize={size * 0.032}
-          fontFamily="Inter, system-ui, sans-serif"
+          fontFamily="'Space Grotesk', Inter, system-ui, sans-serif"
           letterSpacing="3"
         >
           {meta.label.toUpperCase()}
         </text>
 
-        {/* Wind arc indicator */}
+        {/* Wind arc */}
         {windSpeed >= 8 && (
-          <WindArc cx={cx} cy={cy} r={r} dir={windDir} speed={windSpeed} palette={palette} size={size} />
+          <WindArc cx={cx} cy={cy} r={r} dir={windDir} speed={windSpeed} cPalette={cPalette} size={size} />
         )}
       </svg>
     </div>
   )
 }
 
-// SVGs
-
-function SvgDefs({ cx, cy, r, palette, isDay, coreOpacity }) {
-  
-  // Light source, depending on day and time
+function SvgDefs({ cx, cy, r, cPalette, isDay, coreOpacity }) {
   const lightX = isDay ? cx - r * 0.28 : cx + r * 0.2
   const lightY = isDay ? cy - r * 0.32 : cy + r * 0.05
 
@@ -194,31 +236,35 @@ function SvgDefs({ cx, cy, r, palette, isDay, coreOpacity }) {
         <circle cx={cx} cy={cy} r={r - 0.5} />
       </clipPath>
 
-      {/* Sphere base */}
-      <radialGradient id="cs-base" gradientUnits="userSpaceOnUse" cx={lightX} cy={lightY} r={r * 1.4}>
-        <stop offset="0%" stopColor={palette.accent} stopOpacity={coreOpacity * 0.9} />
-        <stop offset="45%" stopColor={palette.accent} stopOpacity={coreOpacity * 0.35} />
-        <stop offset="100%" stopColor="#000408" stopOpacity="0.75" />
+      {/* Condition-reactive sphere base */}
+      <radialGradient id="cs-base" gradientUnits="userSpaceOnUse" cx={lightX} cy={lightY} r={r * 1.5}>
+        <stop offset="0%" stopColor={cPalette.core} stopOpacity={coreOpacity * 1.1} />
+        <stop offset="40%" stopColor={cPalette.mid} stopOpacity={coreOpacity * 0.75} />
+        <stop offset="100%" stopColor={cPalette.edge} stopOpacity="0.92" />
+      </radialGradient>
+
+      {/* Rotating shimmer */}
+      <radialGradient id="cs-shimmer" gradientUnits="userSpaceOnUse" cx={cx} cy={cy - r * 0.3} r={r * 0.9}>
+        <stop offset="0%" stopColor={cPalette.shimmer} />
+        <stop offset="100%" stopColor="transparent" />
       </radialGradient>
 
       {/* Daytime sheen */}
       <radialGradient id="cs-daysheen" gradientUnits="userSpaceOnUse" cx={cx - r * 0.3} cy={cy - r * 0.4} r={r * 1.1}>
-        <stop offset="0%"   stopColor="rgba(255,248,220,0.28)" />
+        <stop offset="0%" stopColor="rgba(255,248,220,0.22)" />
         <stop offset="100%" stopColor="transparent" />
       </radialGradient>
 
       {/* Night sheen */}
       <radialGradient id="cs-nightsheen" gradientUnits="userSpaceOnUse" cx={cx + r * 0.35} cy={cy + r * 0.4} r={r * 1.2}>
-        <stop offset="0%"   stopColor="rgba(10,20,60,0.55)" />
+        <stop offset="0%" stopColor="rgba(10,20,60,0.55)" />
         <stop offset="100%" stopColor="transparent" />
       </radialGradient>
 
-      {/* Cloud blur */}
       <filter id="cs-cloud" x="-60%" y="-60%" width="220%" height="220%">
         <feGaussianBlur stdDeviation="5" />
       </filter>
 
-      {/* Bloom filter for outer atmosphere ring */}
       <filter id="cs-bloom" x="-80%" y="-80%" width="260%" height="260%">
         <feGaussianBlur stdDeviation="14" result="blur" />
         <feMerge>
@@ -227,7 +273,6 @@ function SvgDefs({ cx, cy, r, palette, isDay, coreOpacity }) {
         </feMerge>
       </filter>
 
-      {/* Fog turbulence */}
       <filter id="cs-fog" x="-10%" y="-10%" width="120%" height="120%">
         <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="8" />
         <feDisplacementMap in="SourceGraphic" scale="10" />
@@ -236,8 +281,6 @@ function SvgDefs({ cx, cy, r, palette, isDay, coreOpacity }) {
     </defs>
   )
 }
-
-// Cloud wisps
 
 function CloudWisps({ cx, cy, r, opacity, seed }) {
   const wisps = useMemo(() => {
@@ -272,8 +315,6 @@ function CloudWisps({ cx, cy, r, opacity, seed }) {
   )
 }
 
-// Precipitation
-
 function PrecipLayer({ cx, cy, r, type, count }) {
   const particles = useMemo(() =>
     Array.from({ length: count }, (_, i) => ({
@@ -305,7 +346,6 @@ function PrecipLayer({ cx, cy, r, type, count }) {
     )
   }
 
-  // Snow
   return (
     <g>
       {particles.map(p => (
@@ -323,8 +363,6 @@ function PrecipLayer({ cx, cy, r, type, count }) {
     </g>
   )
 }
-
-// Fog
 
 function FogLayer({ cx, cy, r }) {
   return (
@@ -348,8 +386,6 @@ function FogLayer({ cx, cy, r }) {
   )
 }
 
-// Lightning
-
 function LightningBolt({ cx, cy, r }) {
   const path = [
     `M ${cx - 10} ${cy - r * 0.28}`,
@@ -371,15 +407,13 @@ function LightningBolt({ cx, cy, r }) {
   )
 }
 
-// Wind arc
-
-function WindArc({ cx, cy, r, dir, speed, palette, size }) {
+function WindArc({ cx, cy, r, dir, speed, cPalette, size }) {
   const arcR = r + size * 0.075
   const arcSpanDeg = Math.min((speed / 80) * 110, 110)
 
   const toRad = deg => (deg * Math.PI) / 180
   const start = toRad(90 + dir - arcSpanDeg / 2)
-  const end   = toRad(90 + dir + arcSpanDeg / 2)
+  const end = toRad(90 + dir + arcSpanDeg / 2)
 
   const x1 = cx + arcR * Math.cos(start)
   const y1 = cy + arcR * Math.sin(start)
@@ -387,22 +421,22 @@ function WindArc({ cx, cy, r, dir, speed, palette, size }) {
   const y2 = cy + arcR * Math.sin(end)
 
   const midAngle = (start + end) / 2
-  const labelX   = cx + (arcR + 14) * Math.cos(midAngle)
-  const labelY   = cy + (arcR + 14) * Math.sin(midAngle)
+  const labelX = cx + (arcR + 14) * Math.cos(midAngle)
+  const labelY = cy + (arcR + 14) * Math.sin(midAngle)
 
   return (
-    <g opacity="0.45">
+    <g opacity="0.50">
       <path
         d={`M ${x1} ${y1} A ${arcR} ${arcR} 0 0 1 ${x2} ${y2}`}
         fill="none"
-        stroke={palette.accent}
+        stroke={cPalette.core}
         strokeWidth="1.5"
         strokeLinecap="round"
       />
       <text
         x={labelX} y={labelY + 4}
         textAnchor="middle"
-        fill={palette.accent}
+        fill={cPalette.core}
         fontSize="9"
         fontFamily="'JetBrains Mono', monospace"
         letterSpacing="0.5"
@@ -413,14 +447,12 @@ function WindArc({ cx, cy, r, dir, speed, palette, size }) {
   )
 }
 
-// Skeleton
-
 function SphereSkeleton({ size }) {
   return (
     <div
       className="rounded-full animate-pulse w-full mx-auto"
       style={{
-        maxWidth:   size * 0.75,
+        maxWidth: size * 0.75,
         aspectRatio: '1 / 1',
         background: 'var(--bg-elevated)',
       }}

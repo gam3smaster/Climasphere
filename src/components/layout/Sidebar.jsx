@@ -21,12 +21,11 @@ export const NAV = [
   { to: '/air', icon: Wind, label: 'Air Quality' },
   { to: '/alerts', icon: Bell, label: 'Alerts' },
   { to: '/history', icon: TrendingUp, label: 'History' },
-  { to: '/favs', icon: Star, label: 'Favorites' },
+  { to: '/favs', icon: Star, label: 'Favourites' },
 ]
 
 export const NAV_BOTTOM = [
   { to: '/settings', icon: Settings, label: 'Settings' },
-  { to: '/profile', icon: User, label: 'Profile' },
 ]
 
 export function Sidebar() {

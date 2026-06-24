@@ -7,7 +7,6 @@ export function AppShell({ children }) {
   const mainRef = useRef(null)
   const { pathname } = useLocation()
 
-// So scroll position doesn't carry over to another page
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0)
   }, [pathname])

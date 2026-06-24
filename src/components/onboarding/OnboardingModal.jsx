@@ -7,13 +7,13 @@ import { searchLocations, reverseGeocode } from '../../services/geocoding'
 import { debounce } from '../../lib/utils'
 
 // Symbols for user avatar
-const AVATARS = ['◎', '◈', '◍']
+const AVATARS = ['bear', 'cat', 'dog', 'panda', 'rabbit']
 
 export function OnboardingModal() {
   const { onboarding, setUserProfile, completeOnboarding } = useUiStore()
   const { setActive } = useLocationStore()
 
-  const [name,   setName]   = useState('')
+  const [name, setName] = useState('')
   const [avatar, setAvatar] = useState(0)
 
   if (onboarding.complete) return null
@@ -59,9 +59,12 @@ function NameStep({ name, avatar, onNameChange, onAvatarChange, onContinue }) {
       <div className="mb-8">
         <img src="/climasphere-logo.png"
           alt="ClimaSphere"
-          className="w-16 h-16 object-contain mb-4"
+          className="w-16 h-16 object-contain mb-3"
           style={{ background: '#000', borderRadius: 12 }}
         />
+        <p className="text-5x1 font-data mb-4" style={{ color: 'var(--text-ghost)', letterSpacing: '2.5px' }}>
+          CLIMASPHERE
+        </p>
         <h1 className="text-2xl font-light mb-2" style={{ color: 'var(--text-primary)' }}>
           What should we call you?
         </h1>
@@ -72,16 +75,20 @@ function NameStep({ name, avatar, onNameChange, onAvatarChange, onContinue }) {
 
       {/* Avatar selector */}
       <div className="flex gap-3 mb-6">
-        {AVATARS.map((symbol, i) => (
-          <button className="w-12 h-12 rounded-2xl text-xl transition-all"
+        {AVATARS.map((animal, i) => (
+          <button
             key={i}
             onClick={() => onAvatarChange(i)}
+            className="w-14 h-14 rounded-2xl p-1.5 transition-all"
             style={{
-                background: avatar === i ? 'var(--bg-elevated)' : 'var(--bg-surface)',
-                border: `1px solid ${avatar === i ? 'var(--accent-primary)' : 'var(--border-default)'}`,
-                color: avatar === i ? 'var(--accent-primary)' : 'var(--text-muted)',
-              }}>
-            {symbol}
+              background: avatar === i ? 'var(--bg-elevated)' : 'var(--bg-surface)',
+              border: `1px solid ${avatar === i ? 'var(--accent-primary)' : 'var(--border-default)'}`,
+            }}>
+            <img
+              src={`/avatars/${animal}.png`}
+              alt={animal}
+              className="w-full h-full object-contain"
+            />
           </button>
         ))}
       </div>
@@ -122,11 +129,11 @@ function NameStep({ name, avatar, onNameChange, onAvatarChange, onContinue }) {
 
 function LocationStep({ onLocationChosen }) {
   const geo = useGeolocation()
-  const [query,      setQuery]      = useState('')
-  const [results,    setResults]    = useState([])
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
   const [isSearching, setSearching] = useState(false)
 
-  // Waits 350ms after the user stops typing
+  // Wait 350ms after the user stops typing
   const doSearch = useMemo(() => debounce(async (q) => {
     if (!q.trim()) { setResults([]); return }
     setSearching(true)
@@ -210,15 +217,13 @@ function LocationStep({ onLocationChosen }) {
 
       {/* Results */}
       {results.length > 0 && (
-        <div
-          className="rounded-xl overflow-hidden"
+        <div className="rounded-xl overflow-hidden"
           style={{ border: '1px solid var(--border-default)' }}
         >
           {results.map((loc, i) => (
-            <button
+            <button className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-all"
               key={loc.id ?? `${loc.lat},${loc.lon}`}
               onClick={() => onLocationChosen(loc)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-all"
               style={{
                 background: 'transparent',
                 borderTop: i > 0 ? '1px solid var(--border-subtle)' : 'none',

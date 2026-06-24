@@ -1,5 +1,6 @@
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
 const AQI_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality'
+const ARCHIVE_URL = 'https://archive-api.open-meteo.com/v1/archive'
 
 // Fetches weather and AQI together
 export async function fetchWeather(lat, lon) {
@@ -158,9 +159,38 @@ function parseAqiResponse(raw) {
     o3: c.ozone,
     hourly: raw.hourly.time.map((time, i) => ({
       time,
+
       aqi: raw.hourly.european_aqi[i],
       pm10: raw.hourly.pm10[i],
       pm25: raw.hourly.pm2_5[i],
     })),
   }
+}
+
+// Past weather for a date range — backed by Open-Meteo's ERA5 reanalysis
+// archive, which covers any date back to 1940 with no API key.
+export async function fetchHistory(lat, lon, startDate, endDate) {
+  const params = new URLSearchParams({
+    latitude:   lat,
+    longitude:  lon,
+    start_date: startDate,
+    end_date:   endDate,
+    daily: [
+      'temperature_2m_max',
+      'temperature_2m_min',
+      'precipitation_sum',
+    ].join(','),
+    timezone: 'auto',
+  })
+
+  const res = await fetch(`${ARCHIVE_URL}?${params}`)
+  if (!res.ok) throw new Error(`History fetch failed (${res.status})`)
+
+  const raw = await res.json()
+  return raw.daily.time.map((time, i) => ({
+    time,
+    tempMax:   raw.daily.temperature_2m_max[i],
+    tempMin:   raw.daily.temperature_2m_min[i],
+    precipSum: raw.daily.precipitation_sum[i],
+  }))
 }
